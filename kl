@@ -1,0 +1,42 @@
+import numpy as np
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Input, Dense, Reshape, Flatten, Dropout
+from tensorflow.keras.layers import BatchNormalization, Activation, UpSampling2D, Conv2D
+from tensorflow.keras.optimizers import Adam
+
+# Generator model
+def build_generator():
+    noise_shape = (100,)
+    model = Sequential()
+    model.add(Dense(128 * 7 * 7, input_shape=noise_shape))
+    model.add(Reshape((7, 7, 128)))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+    model.add(UpSampling2D())
+    model.add(Conv2D(64, kernel_size=5, padding="same"))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+    model.add(UpSampling2D())
+    model.add(Conv2D(1, kernel_size=5, padding="same"))
+    model.add(Activation("tanh"))
+    return model
+
+# Main function
+def main():
+    # Build generator
+    generator = build_generator()
+    generator.compile(loss="binary_crossentropy", optimizer=Adam(learning_rate=0.0002, beta_1=0.5))
+
+    # Generate anime-style images
+    noise = np.random.normal(0, 1, (1, 100))
+    generated_image = generator.predict(noise)
+
+    # Save generated image
+    generated_image = (generated_image.squeeze() + 1) * 127.5
+    generated_image = generated_image.astype(np.uint8)
+    from PIL import Image
+    img = Image.fromarray(generated_image)
+    img.save("generated_anime_image.png")
+    
+if __name__ == "__main__":
+    main()
